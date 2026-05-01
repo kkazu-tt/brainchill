@@ -17,16 +17,18 @@ export default function ChatScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ChatHeader />
-        <View className="flex-1">
-          <ChatList messages={messages} isAssistantTyping={isAssistantTyping} />
+        <View className="flex-1 web:w-full web:max-w-3xl web:self-center">
+          <ChatHeader />
+          <View className="flex-1">
+            <ChatList messages={messages} isAssistantTyping={isAssistantTyping} />
+          </View>
+          <ChatInputBar
+            onSend={(text) => {
+              void sendUserMessage(text);
+            }}
+            disabled={isAssistantTyping}
+          />
         </View>
-        <ChatInputBar
-          onSend={(text) => {
-            void sendUserMessage(text);
-          }}
-          disabled={isAssistantTyping}
-        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

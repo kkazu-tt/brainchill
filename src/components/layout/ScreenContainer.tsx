@@ -16,7 +16,9 @@ export function ScreenContainer({
   scrollable = true,
 }: ScreenContainerProps) {
   const Body = (
-    <View className="px-5 pb-8 pt-2 gap-5">{children}</View>
+    <View className="px-5 pb-8 pt-2 gap-5 web:w-full web:max-w-3xl web:self-center">
+      {children}
+    </View>
   );
 
   return (
