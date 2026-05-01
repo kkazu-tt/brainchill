@@ -14,6 +14,7 @@ import {
 } from "../data/historySelectors";
 import { HistoryLogList } from "./HistoryLogList";
 import { HistoryStatsCards } from "./HistoryStatsCards";
+import { WeeklySummaryCard } from "./WeeklySummaryCard";
 
 export function HistoryScreen() {
   const router = useRouter();
@@ -52,6 +53,8 @@ export function HistoryScreen() {
           <Text className="text-base text-xs font-semibold">記録</Text>
         </Pressable>
       </View>
+
+      <WeeklySummaryCard />
 
       <HistoryStatsCards
         weekStats={weekStats}

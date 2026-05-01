@@ -11,6 +11,10 @@ import {
 import { runInference, type InferenceProvider } from "@/services/ai/inference";
 import { parseSaunaLog } from "@/services/ai/saunaLogParser";
 import {
+  generateWeeklySummary,
+  type WeeklySummary,
+} from "@/services/ai/weeklySummary";
+import {
   cancelDailyFatigueCheck,
   scheduleDailyFatigueCheck,
 } from "@/services/push/notificationScheduler";
@@ -50,6 +54,10 @@ interface AppState {
   geminiApiKey: string | null;
   /** which provider produced the last inference, drives the chat badge */
   lastInferenceProvider: InferenceProvider | null;
+  /** cached weekly recap shown on the History screen — null until generated */
+  weeklySummary: WeeklySummary | null;
+  /** in-flight indicator for the weekly recap call */
+  isGeneratingWeeklySummary: boolean;
   /** daily fatigue check-in: enabled toggle + local time of day */
   notifications: {
     dailyEnabled: boolean;
@@ -71,6 +79,8 @@ interface AppState {
   applyLLMInference: (result: LLMInferenceResult) => void;
   /** persist (or clear) the user's Gemini API key */
   setGeminiApiKey: (key: string | null) => void;
+  /** generate (or refresh) the weekly recap card on the History screen */
+  refreshWeeklySummary: () => Promise<void>;
   /** toggle the daily fatigue check-in; schedules or cancels the OS notification */
   setDailyNotificationEnabled: (enabled: boolean) => Promise<void>;
   /** change the time of day for the daily fatigue check-in */
@@ -97,6 +107,7 @@ const initialState = (): Omit<
   | "addManualLog"
   | "applyLLMInference"
   | "setGeminiApiKey"
+  | "refreshWeeklySummary"
   | "setDailyNotificationEnabled"
   | "setDailyNotificationTime"
   | "rehydrateNotifications"
@@ -111,6 +122,8 @@ const initialState = (): Omit<
   isAssistantTyping: false,
   geminiApiKey: null,
   lastInferenceProvider: null,
+  weeklySummary: null,
+  isGeneratingWeeklySummary: false,
   notifications: {
     dailyEnabled: false,
     hour: 9,
@@ -222,6 +235,22 @@ export const useAppStore = create<AppState>()(
 
       setGeminiApiKey: (key) =>
         set({ geminiApiKey: key && key.trim() ? key.trim() : null }),
+
+      refreshWeeklySummary: async () => {
+        if (get().isGeneratingWeeklySummary) return;
+        set({ isGeneratingWeeklySummary: true });
+        try {
+          const summary = await generateWeeklySummary({
+            trend: get().trend,
+            logs: get().userLogs,
+            apiKey: get().geminiApiKey,
+          });
+          set({ weeklySummary: summary, isGeneratingWeeklySummary: false });
+        } catch (err) {
+          console.warn("[weeklySummary] generation failed:", err);
+          set({ isGeneratingWeeklySummary: false });
+        }
+      },
 
       setDailyNotificationEnabled: async (enabled) => {
         const { hour, minute } = get().notifications;
@@ -359,6 +388,7 @@ export const useAppStore = create<AppState>()(
         userLogs: state.userLogs,
         geminiApiKey: state.geminiApiKey,
         notifications: state.notifications,
+        weeklySummary: state.weeklySummary,
       }),
       version: 1,
     },
