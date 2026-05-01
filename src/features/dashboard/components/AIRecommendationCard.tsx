@@ -70,6 +70,12 @@ export function AIRecommendationCard({
           {isDone ? "完了済み" : "完了 (Done)"}
         </Text>
       </Pressable>
+
+      {isDone && (
+        <Text className="mt-2 text-text-muted text-[11px] text-center">
+          履歴に追加しました
+        </Text>
+      )}
     </Card>
   );
 }

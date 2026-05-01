@@ -137,12 +137,30 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       ...initialState(),
 
-      completeRecommendation: (id) =>
-        set((state) =>
-          state.recommendation.id === id
-            ? { recommendation: { ...state.recommendation, completed: true } }
-            : state,
-        ),
+      completeRecommendation: (id) => {
+        const state = get();
+        const rec = state.recommendation;
+        if (rec.id !== id || rec.completed) return;
+
+        const now = new Date().toISOString();
+        const log: UserLog = {
+          id: uid("log"),
+          source: "manual",
+          createdAt: now,
+          text: completionLogText(rec.category, rec.message),
+          moodTag: null,
+          parsedSaunaReport: null,
+        };
+
+        set((s) => ({
+          recommendation: { ...s.recommendation, completed: true },
+          userLogs: [...s.userLogs, log],
+          trend:
+            rec.category === "sauna"
+              ? incrementTodaySaunaVisit(s.trend)
+              : s.trend,
+        }));
+      },
 
       applyLLMInference: (result) => {
         const prev = get().score;
@@ -417,6 +435,24 @@ function updateTodayInTrend(trend: TrendPoint[], fatigue: number): TrendPoint[] 
   if (trend.length === 0) return trend;
   const last = trend[trend.length - 1]!;
   return [...trend.slice(0, -1), { ...last, fatigue }];
+}
+
+function completionLogText(
+  category: AIRecommendation["category"],
+  message: string,
+): string {
+  switch (category) {
+    case "sauna":
+      return `サウナを完了 — ${message}`;
+    case "meditation":
+      return `瞑想を実施 — ${message}`;
+    case "rest":
+      return `休息を実施 — ${message}`;
+    case "movement":
+      return `軽い運動を実施 — ${message}`;
+    case "hydration":
+      return `水分補給 — ${message}`;
+  }
 }
 
 function incrementTodaySaunaVisit(trend: TrendPoint[]): TrendPoint[] {
