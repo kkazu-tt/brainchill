@@ -1,7 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { Text } from "react-native";
 
 import { colors } from "@/constants/theme";
+
+function TabLabel({ children, color }: { children: string; color: string }) {
+  return (
+    <Text
+      numberOfLines={1}
+      style={{
+        color,
+        fontSize: 11,
+        fontWeight: "600",
+        textAlign: "center",
+        paddingBottom: 4,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -14,18 +32,6 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-        },
-        tabBarItemStyle: {
-          paddingTop: 6,
-          paddingBottom: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-          lineHeight: 20,
-          marginTop: 2,
-          paddingTop: 1,
         },
       }}
     >
@@ -36,6 +42,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="pulse" size={size} color={color} />
           ),
+          tabBarLabel: ({ color }) => <TabLabel color={color}>Home</TabLabel>,
         }}
       />
       <Tabs.Screen
@@ -44,6 +51,9 @@ export default function TabsLayout() {
           title: "History",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time-outline" size={size} color={color} />
+          ),
+          tabBarLabel: ({ color }) => (
+            <TabLabel color={color}>History</TabLabel>
           ),
         }}
       />
@@ -54,6 +64,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles-outline" size={size} color={color} />
           ),
+          tabBarLabel: ({ color }) => <TabLabel color={color}>Chat</TabLabel>,
         }}
       />
     </Tabs>
