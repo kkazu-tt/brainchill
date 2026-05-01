@@ -1,7 +1,10 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, type Href } from "expo-router";
 import { useMemo } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
+import { colors } from "@/constants/theme";
 import { useAppStore } from "@/store/useAppStore";
 
 import {
@@ -13,6 +16,7 @@ import { HistoryLogList } from "./HistoryLogList";
 import { HistoryStatsCards } from "./HistoryStatsCards";
 
 export function HistoryScreen() {
+  const router = useRouter();
   const trend = useAppStore((s) => s.trend);
   const userLogs = useAppStore((s) => s.userLogs);
 
@@ -29,13 +33,24 @@ export function HistoryScreen() {
 
   return (
     <ScreenContainer>
-      <View className="pt-3">
-        <Text className="text-text-secondary text-xs tracking-widest uppercase">
-          History
-        </Text>
-        <Text className="text-text-primary text-3xl font-bold tracking-tight mt-0.5">
-          記録ハイライト
-        </Text>
+      <View className="pt-3 flex-row items-end justify-between">
+        <View>
+          <Text className="text-text-secondary text-xs tracking-widest uppercase">
+            History
+          </Text>
+          <Text className="text-text-primary text-3xl font-bold tracking-tight mt-0.5">
+            記録ハイライト
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => router.push("/log" as Href)}
+          accessibilityRole="button"
+          accessibilityLabel="記録を追加"
+          className="flex-row items-center gap-1.5 px-3.5 py-2 rounded-pill bg-sauna"
+        >
+          <Ionicons name="add" size={16} color={colors.base} />
+          <Text className="text-base text-xs font-semibold">記録</Text>
+        </Pressable>
       </View>
 
       <HistoryStatsCards

@@ -42,6 +42,10 @@ export default function RootLayout() {
               name="settings"
               options={{ presentation: "modal", animation: "slide_from_bottom" }}
             />
+            <Stack.Screen
+              name="log"
+              options={{ presentation: "modal", animation: "slide_from_bottom" }}
+            />
           </Stack>
         </ThemeProvider>
       </SafeAreaProvider>

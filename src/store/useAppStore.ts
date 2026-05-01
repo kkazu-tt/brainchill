@@ -14,12 +14,16 @@ import {
   cancelDailyFatigueCheck,
   scheduleDailyFatigueCheck,
 } from "@/services/push/notificationScheduler";
-import type { FatigueQuickReply } from "@/services/push/notificationCategories";
+import {
+  findQuickReply,
+  type FatigueQuickReply,
+} from "@/services/push/notificationCategories";
 import type {
   AIRecommendation,
   BrainFatigueScore,
   ChatMessage,
   LLMInferenceResult,
+  MoodTag,
   TrendPoint,
   UserLog,
   WearableSnapshot,
@@ -61,6 +65,8 @@ interface AppState {
   sendUserMessage: (text: string) => Promise<void>;
   /** record an interactive notification quick-reply tap */
   recordPushReply: (reply: FatigueQuickReply) => void;
+  /** add a manually-entered log (mood chip, free text, or both) */
+  addManualLog: (input: { text?: string | null; moodTag?: MoodTag | null }) => void;
   /** apply a fresh LLM inference: blends into the score and refreshes the recommendation */
   applyLLMInference: (result: LLMInferenceResult) => void;
   /** persist (or clear) the user's Gemini API key */
@@ -88,6 +94,7 @@ const initialState = (): Omit<
   | "completeRecommendation"
   | "sendUserMessage"
   | "recordPushReply"
+  | "addManualLog"
   | "applyLLMInference"
   | "setGeminiApiKey"
   | "setDailyNotificationEnabled"
@@ -292,6 +299,49 @@ export const useAppStore = create<AppState>()(
 
         set((state) => ({ userLogs: [...state.userLogs, log] }));
         get().applyLLMInference(result);
+      },
+
+      addManualLog: ({ text, moodTag }) => {
+        const trimmed = text?.trim() || null;
+        const tag = moodTag ?? null;
+        if (!trimmed && !tag) return;
+
+        const now = new Date().toISOString();
+        const sauna = trimmed ? parseSaunaLog(trimmed) : null;
+
+        const log: UserLog = {
+          id: uid("log"),
+          source: "manual",
+          createdAt: now,
+          text: trimmed,
+          moodTag: tag,
+          parsedSaunaReport: sauna?.isSaunaReport ? sauna : null,
+        };
+
+        set((state) => ({
+          userLogs: [...state.userLogs, log],
+          trend: sauna?.isSaunaReport
+            ? incrementTodaySaunaVisit(state.trend)
+            : state.trend,
+        }));
+
+        // Mood tag carries an implied fatigue reading — reuse the same
+        // mapping the push quick replies do.
+        if (tag) {
+          const reply = findQuickReply(tag);
+          if (reply) {
+            const adjusted = sauna?.isSaunaReport
+              ? Math.max(0, reply.impliedFatigue - sauna.inferredFatigueRecovery)
+              : reply.impliedFatigue;
+            get().applyLLMInference({
+              id: uid("llm"),
+              fatigueScore: adjusted,
+              confidence: reply.confidence,
+              recommendation: recommendationForPushReply(reply.tag),
+              createdAt: now,
+            });
+          }
+        }
       },
 
       reset: () => set(initialState()),
