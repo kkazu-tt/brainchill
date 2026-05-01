@@ -23,7 +23,15 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "BrainChill",
+      "shortName": "BrainChill",
+      "lang": "ja",
+      "description": "脳疲労を見える化して、整える習慣を続けるためのアプリ",
+      "themeColor": "#1A1D21",
+      "backgroundColor": "#1A1D21",
+      "display": "standalone",
+      "orientation": "portrait"
     },
     "plugins": [
       "expo-router",
