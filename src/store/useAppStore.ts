@@ -10,6 +10,10 @@ import {
 } from "@/features/dashboard/data/mockData";
 import { runInference, type InferenceProvider } from "@/services/ai/inference";
 import { parseSaunaLog } from "@/services/ai/saunaLogParser";
+import {
+  cancelDailyFatigueCheck,
+  scheduleDailyFatigueCheck,
+} from "@/services/push/notificationScheduler";
 import type { FatigueQuickReply } from "@/services/push/notificationCategories";
 import type {
   AIRecommendation,
@@ -42,6 +46,14 @@ interface AppState {
   geminiApiKey: string | null;
   /** which provider produced the last inference, drives the chat badge */
   lastInferenceProvider: InferenceProvider | null;
+  /** daily fatigue check-in: enabled toggle + local time of day */
+  notifications: {
+    dailyEnabled: boolean;
+    hour: number;
+    minute: number;
+    /** false when the OS denied permission; UI shows guidance */
+    permissionDenied: boolean;
+  };
 
   // ---- actions ----
   completeRecommendation: (id: string) => void;
@@ -53,6 +65,12 @@ interface AppState {
   applyLLMInference: (result: LLMInferenceResult) => void;
   /** persist (or clear) the user's Gemini API key */
   setGeminiApiKey: (key: string | null) => void;
+  /** toggle the daily fatigue check-in; schedules or cancels the OS notification */
+  setDailyNotificationEnabled: (enabled: boolean) => Promise<void>;
+  /** change the time of day for the daily fatigue check-in */
+  setDailyNotificationTime: (hour: number, minute: number) => Promise<void>;
+  /** re-arm the OS schedule on app launch from persisted settings */
+  rehydrateNotifications: () => Promise<void>;
   /** test helper to clear persisted state */
   reset: () => void;
 }
@@ -72,6 +90,9 @@ const initialState = (): Omit<
   | "recordPushReply"
   | "applyLLMInference"
   | "setGeminiApiKey"
+  | "setDailyNotificationEnabled"
+  | "setDailyNotificationTime"
+  | "rehydrateNotifications"
   | "reset"
 > => ({
   score: mockScore,
@@ -83,6 +104,12 @@ const initialState = (): Omit<
   isAssistantTyping: false,
   geminiApiKey: null,
   lastInferenceProvider: null,
+  notifications: {
+    dailyEnabled: false,
+    hour: 9,
+    minute: 0,
+    permissionDenied: false,
+  },
 });
 
 export const useAppStore = create<AppState>()(
@@ -189,6 +216,61 @@ export const useAppStore = create<AppState>()(
       setGeminiApiKey: (key) =>
         set({ geminiApiKey: key && key.trim() ? key.trim() : null }),
 
+      setDailyNotificationEnabled: async (enabled) => {
+        const { hour, minute } = get().notifications;
+        if (enabled) {
+          const ok = await scheduleDailyFatigueCheck(hour, minute);
+          set((state) => ({
+            notifications: {
+              ...state.notifications,
+              dailyEnabled: ok,
+              permissionDenied: !ok,
+            },
+          }));
+        } else {
+          await cancelDailyFatigueCheck();
+          set((state) => ({
+            notifications: {
+              ...state.notifications,
+              dailyEnabled: false,
+              permissionDenied: false,
+            },
+          }));
+        }
+      },
+
+      setDailyNotificationTime: async (hour, minute) => {
+        const wasEnabled = get().notifications.dailyEnabled;
+        set((state) => ({
+          notifications: { ...state.notifications, hour, minute },
+        }));
+        if (wasEnabled) {
+          const ok = await scheduleDailyFatigueCheck(hour, minute);
+          set((state) => ({
+            notifications: {
+              ...state.notifications,
+              dailyEnabled: ok,
+              permissionDenied: !ok,
+            },
+          }));
+        }
+      },
+
+      rehydrateNotifications: async () => {
+        const { dailyEnabled, hour, minute } = get().notifications;
+        if (!dailyEnabled) return;
+        const ok = await scheduleDailyFatigueCheck(hour, minute);
+        if (!ok) {
+          set((state) => ({
+            notifications: {
+              ...state.notifications,
+              dailyEnabled: false,
+              permissionDenied: true,
+            },
+          }));
+        }
+      },
+
       recordPushReply: (reply) => {
         const now = new Date().toISOString();
         const log: UserLog = {
@@ -226,6 +308,7 @@ export const useAppStore = create<AppState>()(
         chat: state.chat,
         userLogs: state.userLogs,
         geminiApiKey: state.geminiApiKey,
+        notifications: state.notifications,
       }),
       version: 1,
     },

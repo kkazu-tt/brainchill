@@ -47,6 +47,21 @@ export async function initPushNotifications(): Promise<void> {
     useAppStore.getState().recordPushReply(reply);
   });
   unsubscribe = () => sub.remove();
+
+  // Re-arm any persisted daily fatigue check schedule. Zustand may
+  // still be hydrating on first launch, so wait for that to settle
+  // before reading `dailyEnabled`.
+  const armOnce = () => {
+    void useAppStore.getState().rehydrateNotifications();
+  };
+  if (useAppStore.persist.hasHydrated()) {
+    armOnce();
+  } else {
+    const off = useAppStore.persist.onFinishHydration(() => {
+      armOnce();
+      off();
+    });
+  }
 }
 
 export function teardownPushNotifications(): void {

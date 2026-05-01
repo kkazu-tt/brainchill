@@ -7,6 +7,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   View,
@@ -18,14 +19,36 @@ import { useAppStore } from "@/store/useAppStore";
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/app/apikey";
 
+const TIME_PRESETS: ReadonlyArray<{ hour: number; minute: number; label: string }> = [
+  { hour: 7, minute: 0, label: "07:00" },
+  { hour: 9, minute: 0, label: "09:00" },
+  { hour: 12, minute: 0, label: "12:00" },
+  { hour: 15, minute: 0, label: "15:00" },
+  { hour: 18, minute: 0, label: "18:00" },
+  { hour: 21, minute: 0, label: "21:00" },
+];
+
+const formatTime = (h: number, m: number): string =>
+  `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
 export function SettingsScreen() {
   const router = useRouter();
   const storedKey = useAppStore((s) => s.geminiApiKey);
   const setGeminiApiKey = useAppStore((s) => s.setGeminiApiKey);
   const provider = useAppStore((s) => s.lastInferenceProvider);
 
+  const notifications = useAppStore((s) => s.notifications);
+  const setDailyNotificationEnabled = useAppStore(
+    (s) => s.setDailyNotificationEnabled,
+  );
+  const setDailyNotificationTime = useAppStore(
+    (s) => s.setDailyNotificationTime,
+  );
+
   const [draft, setDraft] = useState(storedKey ?? "");
   const [revealed, setRevealed] = useState(false);
+
+  const isWeb = Platform.OS === "web";
 
   const dirty = (draft.trim() || null) !== (storedKey ?? null);
 
@@ -182,6 +205,83 @@ export function SettingsScreen() {
                   </Text>
                 </Pressable>
               )}
+            </View>
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-text-secondary text-xs uppercase tracking-widest">
+            毎日のセルフチェック
+          </Text>
+          <View className="bg-surface rounded-card border border-border p-4 gap-4">
+            <View className="flex-row items-center gap-3">
+              <View className="flex-1">
+                <Text className="text-text-primary font-semibold">
+                  日次のリマインダー
+                </Text>
+                <Text className="text-text-muted text-xs mt-0.5">
+                  {isWeb
+                    ? "Web版ではOS通知をスケジュールできません。ネイティブ版（iOS / Android）でご利用ください。"
+                    : notifications.dailyEnabled
+                      ? `毎日 ${formatTime(notifications.hour, notifications.minute)} に通知してクイック返信で記録`
+                      : "通知をオンにすると、選んだ時刻に脳疲労チェックを送ります"}
+                </Text>
+              </View>
+              <Switch
+                value={notifications.dailyEnabled}
+                onValueChange={(v) => {
+                  void setDailyNotificationEnabled(v);
+                }}
+                disabled={isWeb}
+                trackColor={{ false: colors.border, true: colors.sauna }}
+                thumbColor={notifications.dailyEnabled ? colors.saunaSoft : colors.textMuted}
+              />
+            </View>
+
+            {notifications.permissionDenied && !isWeb && (
+              <View className="flex-row items-start gap-2 px-3 py-2 rounded-md bg-base border border-border">
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={colors.warning}
+                />
+                <Text className="text-text-muted text-xs flex-1 leading-5">
+                  通知の権限が許可されていません。端末の設定アプリから「通知」を有効にしてください。
+                </Text>
+              </View>
+            )}
+
+            <View className="gap-2">
+              <Text className="text-text-secondary text-xs">通知時刻</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {TIME_PRESETS.map((preset) => {
+                  const selected =
+                    preset.hour === notifications.hour &&
+                    preset.minute === notifications.minute;
+                  return (
+                    <Pressable
+                      key={preset.label}
+                      disabled={isWeb}
+                      onPress={() => {
+                        void setDailyNotificationTime(preset.hour, preset.minute);
+                      }}
+                      className={`px-3 py-1.5 rounded-pill border ${
+                        selected
+                          ? "bg-sauna border-sauna"
+                          : "bg-base border-border"
+                      } ${isWeb ? "opacity-50" : ""}`}
+                    >
+                      <Text
+                        className={`text-xs font-semibold ${
+                          selected ? "text-base" : "text-text-secondary"
+                        }`}
+                      >
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
           </View>
         </View>
