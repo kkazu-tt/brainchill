@@ -1,7 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { Pressable, Text, View } from "react-native";
 
 import { colors } from "@/constants/theme";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const APP_ICON = require("../../../../assets/images/icon-small.png") as number;
 
 interface HeaderProps {
   greeting?: string;
@@ -11,15 +15,23 @@ interface HeaderProps {
 export function Header({ greeting = "Welcome back", onProfilePress }: HeaderProps) {
   return (
     <View className="flex-row items-center justify-between pt-3">
-      <View>
-        <Text className="text-text-secondary text-xs tracking-widest uppercase">
-          {greeting}
-        </Text>
-        <View className="flex-row items-baseline gap-1 mt-0.5">
-          <Text className="text-text-primary text-3xl font-bold tracking-tight">
-            BrainChill
+      <View className="flex-row items-center gap-3">
+        <Image
+          source={APP_ICON}
+          style={{ width: 40, height: 40, borderRadius: 10 }}
+          contentFit="cover"
+          accessibilityLabel="BrainChill"
+        />
+        <View>
+          <Text className="text-text-secondary text-xs tracking-widest uppercase">
+            {greeting}
           </Text>
-          <View className="w-1.5 h-1.5 bg-sauna rounded-pill mb-2" />
+          <View className="flex-row items-baseline gap-1 mt-0.5">
+            <Text className="text-text-primary text-3xl font-bold tracking-tight">
+              BrainChill
+            </Text>
+            <View className="w-1.5 h-1.5 bg-sauna rounded-pill mb-2" />
+          </View>
         </View>
       </View>
 
