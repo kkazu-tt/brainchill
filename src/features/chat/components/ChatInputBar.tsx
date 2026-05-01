@@ -33,10 +33,12 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
           submitBehavior="blurAndSubmit"
           style={{
             color: colors.textPrimary,
-            fontSize: 15,
-            lineHeight: 20,
+            // 16px keeps iOS Safari from auto-zooming the page on focus.
+            // Anything smaller triggers the zoom in PWA standalone mode.
+            fontSize: 16,
+            lineHeight: 22,
             maxHeight: 100,
-            minHeight: 20,
+            minHeight: 22,
           }}
         />
       </View>

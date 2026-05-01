@@ -30,6 +30,9 @@ function SiteHead() {
       <title>{SITE_TITLE}</title>
       <meta name="description" content={SITE_DESCRIPTION} />
       <meta name="theme-color" content="#1A1D21" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content="BrainChill" />
       <link rel="apple-touch-icon" sizes="180x180" href={APPLE_TOUCH_ICON} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="BrainChill" />
