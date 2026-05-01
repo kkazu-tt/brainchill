@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
-import { Pressable, Text, View } from "react-native";
+import { Image as ExpoImage } from "expo-image";
+import { Platform, Pressable, Text, View } from "react-native";
 
 import { colors } from "@/constants/theme";
+
+import { APP_ICON_DATA_URI } from "../data/appIconDataUri";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const APP_ICON = require("../../../../assets/images/icon-mark.png") as number;
@@ -12,16 +14,37 @@ interface HeaderProps {
   onProfilePress?: () => void;
 }
 
+function AppIcon() {
+  if (Platform.OS === "web") {
+    return (
+      <View
+        accessibilityLabel="BrainChill"
+        style={{
+          width: 40,
+          height: 40,
+          backgroundImage: `url("${APP_ICON_DATA_URI}")`,
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+        }}
+      />
+    );
+  }
+  return (
+    <ExpoImage
+      source={APP_ICON}
+      style={{ width: 40, height: 40 }}
+      contentFit="contain"
+      accessibilityLabel="BrainChill"
+    />
+  );
+}
+
 export function Header({ greeting = "Welcome back", onProfilePress }: HeaderProps) {
   return (
     <View className="flex-row items-center justify-between pt-3">
       <View className="flex-row items-center gap-3">
-        <Image
-          source={APP_ICON}
-          style={{ width: 40, height: 40 }}
-          contentFit="contain"
-          accessibilityLabel="BrainChill"
-        />
+        <AppIcon />
         <View>
           <Text className="text-text-secondary text-xs tracking-widest uppercase">
             {greeting}
