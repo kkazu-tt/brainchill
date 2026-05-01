@@ -12,6 +12,10 @@ import { streamGeminiInference } from "@/services/ai/geminiStreamClient";
 import { runInference, type InferenceProvider } from "@/services/ai/inference";
 import { parseSaunaLog } from "@/services/ai/saunaLogParser";
 import {
+  fetchSnapshot as fetchHealthSnapshot,
+  type HealthSource,
+} from "@/services/health/healthService";
+import {
   generateWeeklySummary,
   type WeeklySummary,
 } from "@/services/ai/weeklySummary";
@@ -59,6 +63,10 @@ interface AppState {
   weeklySummary: WeeklySummary | null;
   /** in-flight indicator for the weekly recap call */
   isGeneratingWeeklySummary: boolean;
+  /** which provider supplied the most recent wearable snapshot */
+  lastHealthSource: HealthSource;
+  /** in-flight indicator for the wearable refresh */
+  isRefreshingSnapshot: boolean;
   /** daily fatigue check-in: enabled toggle + local time of day */
   notifications: {
     dailyEnabled: boolean;
@@ -82,6 +90,8 @@ interface AppState {
   setGeminiApiKey: (key: string | null) => void;
   /** generate (or refresh) the weekly recap card on the History screen */
   refreshWeeklySummary: () => Promise<void>;
+  /** pull a fresh wearable snapshot (HealthKit / Health Connect / mock) */
+  refreshWearableSnapshot: () => Promise<void>;
   /** toggle the daily fatigue check-in; schedules or cancels the OS notification */
   setDailyNotificationEnabled: (enabled: boolean) => Promise<void>;
   /** change the time of day for the daily fatigue check-in */
@@ -109,6 +119,7 @@ const initialState = (): Omit<
   | "applyLLMInference"
   | "setGeminiApiKey"
   | "refreshWeeklySummary"
+  | "refreshWearableSnapshot"
   | "setDailyNotificationEnabled"
   | "setDailyNotificationTime"
   | "rehydrateNotifications"
@@ -125,6 +136,8 @@ const initialState = (): Omit<
   lastInferenceProvider: null,
   weeklySummary: null,
   isGeneratingWeeklySummary: false,
+  lastHealthSource: "mock",
+  isRefreshingSnapshot: false,
   notifications: {
     dailyEnabled: false,
     hour: 9,
@@ -343,6 +356,22 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      refreshWearableSnapshot: async () => {
+        if (get().isRefreshingSnapshot) return;
+        set({ isRefreshingSnapshot: true });
+        try {
+          const { snapshot, source } = await fetchHealthSnapshot();
+          set({
+            snapshot,
+            lastHealthSource: source,
+            isRefreshingSnapshot: false,
+          });
+        } catch (err) {
+          console.warn("[health] snapshot refresh failed:", err);
+          set({ isRefreshingSnapshot: false });
+        }
+      },
+
       setDailyNotificationEnabled: async (enabled) => {
         const { hour, minute } = get().notifications;
         if (enabled) {
@@ -483,6 +512,7 @@ export const useAppStore = create<AppState>()(
         geminiApiKey: state.geminiApiKey,
         notifications: state.notifications,
         weeklySummary: state.weeklySummary,
+        lastHealthSource: state.lastHealthSource,
       }),
       version: 1,
     },

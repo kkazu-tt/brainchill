@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "@/constants/theme";
 import { runExport } from "@/services/export/runExport";
+import { healthSourceLabel } from "@/services/health/healthService";
 import { useAppStore } from "@/store/useAppStore";
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/app/apikey";
@@ -46,6 +47,13 @@ export function SettingsScreen() {
     (s) => s.setDailyNotificationTime,
   );
   const reset = useAppStore((s) => s.reset);
+
+  const snapshot = useAppStore((s) => s.snapshot);
+  const lastHealthSource = useAppStore((s) => s.lastHealthSource);
+  const isRefreshingSnapshot = useAppStore((s) => s.isRefreshingSnapshot);
+  const refreshWearableSnapshot = useAppStore(
+    (s) => s.refreshWearableSnapshot,
+  );
 
   const [draft, setDraft] = useState(storedKey ?? "");
   const [revealed, setRevealed] = useState(false);
@@ -157,6 +165,79 @@ export function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerClassName="px-5 py-6 gap-6">
+        <View className="gap-2">
+          <Text className="text-text-secondary text-xs uppercase tracking-widest">
+            ウェアラブル
+          </Text>
+          <View className="bg-surface rounded-card border border-border p-4 gap-3">
+            <View className="flex-row items-center gap-3">
+              <Ionicons name="watch-outline" size={18} color={colors.teal} />
+              <View className="flex-1">
+                <Text className="text-text-primary font-semibold">
+                  {healthSourceLabel(lastHealthSource)}
+                </Text>
+                <Text className="text-text-muted text-[11px] mt-0.5">
+                  最終取得: {new Date(snapshot.capturedAt).toLocaleString("ja-JP")}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row flex-wrap gap-2">
+              <View className="px-2.5 py-1 rounded-pill bg-base border border-border">
+                <Text className="text-text-secondary text-[11px]">
+                  HRV {snapshot.hrvMs}ms
+                </Text>
+              </View>
+              <View className="px-2.5 py-1 rounded-pill bg-base border border-border">
+                <Text className="text-text-secondary text-[11px]">
+                  RHR {snapshot.restingHeartRateBpm}bpm
+                </Text>
+              </View>
+              <View className="px-2.5 py-1 rounded-pill bg-base border border-border">
+                <Text className="text-text-secondary text-[11px]">
+                  Sleep {snapshot.sleep.score}/100
+                </Text>
+              </View>
+              <View className="px-2.5 py-1 rounded-pill bg-base border border-border">
+                <Text className="text-text-secondary text-[11px]">
+                  Deep {Math.round(snapshot.sleep.deepRatio * 100)}%
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-text-muted text-[11px] flex-1 leading-5">
+                ネイティブビルド時に HealthKit / Health Connect から実データへ差し替え可能です。
+              </Text>
+              <Pressable
+                onPress={() => {
+                  void refreshWearableSnapshot();
+                }}
+                disabled={isRefreshingSnapshot}
+                accessibilityRole="button"
+                className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-pill ${
+                  isRefreshingSnapshot
+                    ? "bg-surface border border-border"
+                    : "bg-sauna"
+                }`}
+              >
+                {!isRefreshingSnapshot && (
+                  <Ionicons
+                    name="refresh"
+                    size={13}
+                    color={colors.base}
+                  />
+                )}
+                <Text
+                  className={`text-xs font-semibold ${
+                    isRefreshingSnapshot ? "text-text-muted" : "text-base"
+                  }`}
+                >
+                  {isRefreshingSnapshot ? "取得中…" : "更新"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
         <View className="gap-2">
           <Text className="text-text-secondary text-xs uppercase tracking-widest">
             AI プロバイダー
