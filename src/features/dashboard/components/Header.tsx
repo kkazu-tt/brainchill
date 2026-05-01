@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import { colors } from "@/constants/theme";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const APP_ICON = require("../../../../assets/images/icon-small.png") as number;
+const APP_ICON = require("../../../../assets/images/icon-mark.png") as number;
 
 interface HeaderProps {
   greeting?: string;
@@ -18,8 +18,8 @@ export function Header({ greeting = "Welcome back", onProfilePress }: HeaderProp
       <View className="flex-row items-center gap-3">
         <Image
           source={APP_ICON}
-          style={{ width: 40, height: 40, borderRadius: 10 }}
-          contentFit="cover"
+          style={{ width: 40, height: 40 }}
+          contentFit="contain"
           accessibilityLabel="BrainChill"
         />
         <View>
