@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 
 import { colors } from "@/constants/theme";
 
@@ -18,8 +17,7 @@ export function Header({ greeting = "Welcome back", onProfilePress }: HeaderProp
       <View className="flex-row items-center gap-3">
         <Image
           source={APP_ICON}
-          style={{ width: 40, height: 40 }}
-          contentFit="contain"
+          style={{ width: 40, height: 40, resizeMode: "contain" }}
           accessibilityLabel="BrainChill"
         />
         <View>
