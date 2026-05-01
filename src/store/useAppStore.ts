@@ -391,7 +391,10 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      reset: () => set(initialState()),
+      reset: () => {
+        void cancelDailyFatigueCheck();
+        set(initialState());
+      },
     }),
     {
       name: "brainchill_store_v1",

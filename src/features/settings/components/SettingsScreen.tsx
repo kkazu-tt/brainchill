@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "@/constants/theme";
+import { runExport } from "@/services/export/runExport";
 import { useAppStore } from "@/store/useAppStore";
 
 const GEMINI_KEY_URL = "https://aistudio.google.com/app/apikey";
@@ -44,9 +45,53 @@ export function SettingsScreen() {
   const setDailyNotificationTime = useAppStore(
     (s) => s.setDailyNotificationTime,
   );
+  const reset = useAppStore((s) => s.reset);
 
   const [draft, setDraft] = useState(storedKey ?? "");
   const [revealed, setRevealed] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const onExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const s = useAppStore.getState();
+      await runExport({
+        state: {
+          score: s.score,
+          snapshot: s.snapshot,
+          trend: s.trend,
+          recommendation: s.recommendation,
+          chat: s.chat,
+          userLogs: s.userLogs,
+          weeklySummary: s.weeklySummary,
+        },
+      });
+    } catch (err) {
+      console.warn("[settings] export failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const onReset = () => {
+    const wipe = () => {
+      reset();
+      setDraft("");
+      close();
+    };
+    const title = "データを全消去";
+    const body =
+      "チャット履歴・ログ・通知設定・APIキーを含め、保存された全データを削除します。元に戻せません。";
+    if (Platform.OS === "web") {
+      if (window.confirm(`${title}\n\n${body}`)) wipe();
+    } else {
+      Alert.alert(title, body, [
+        { text: "キャンセル", style: "cancel" },
+        { text: "全消去", style: "destructive", onPress: wipe },
+      ]);
+    }
+  };
 
   const isWeb = Platform.OS === "web";
 
@@ -282,6 +327,60 @@ export function SettingsScreen() {
                   );
                 })}
               </View>
+            </View>
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-text-secondary text-xs uppercase tracking-widest">
+            データ
+          </Text>
+          <View className="bg-surface rounded-card border border-border p-4 gap-3">
+            <Text className="text-text-muted text-xs leading-5">
+              端末内に保存された記録を JSON で書き出せます。
+              {isWeb
+                ? "ブラウザのダウンロードとして保存されます。"
+                : "共有シートから保存先を選んでください。"}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              <Pressable
+                onPress={() => {
+                  void onExport();
+                }}
+                disabled={isExporting}
+                accessibilityRole="button"
+                className={`flex-row items-center gap-1.5 px-3 py-2 rounded-pill border ${
+                  isExporting
+                    ? "bg-base border-border opacity-60"
+                    : "bg-base border-border"
+                }`}
+              >
+                <Ionicons
+                  name="download-outline"
+                  size={14}
+                  color={colors.teal}
+                />
+                <Text className="text-teal text-xs font-semibold">
+                  {isExporting ? "エクスポート中…" : "JSON でエクスポート"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={onReset}
+                accessibilityRole="button"
+                className="flex-row items-center gap-1.5 px-3 py-2 rounded-pill bg-base border border-border"
+              >
+                <Ionicons
+                  name="refresh-outline"
+                  size={14}
+                  color={colors.danger}
+                />
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: colors.danger }}
+                >
+                  全データを削除
+                </Text>
+              </Pressable>
             </View>
           </View>
         </View>
