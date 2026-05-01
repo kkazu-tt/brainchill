@@ -1,14 +1,30 @@
-import { SafeAreaView, Text, View } from "react-native";
+import { ScreenContainer } from "@/components/layout/ScreenContainer";
+import { AIRecommendationCard } from "@/features/dashboard/components/AIRecommendationCard";
+import { BrainFatigueScoreCard } from "@/features/dashboard/components/BrainFatigueScoreCard";
+import { Header } from "@/features/dashboard/components/Header";
+import { TrendChartCard } from "@/features/dashboard/components/TrendChartCard";
+import { WearableCards } from "@/features/dashboard/components/WearableCards";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function DashboardScreen() {
+  const {
+    score,
+    snapshot,
+    recommendation,
+    trend,
+    completeRecommendation,
+  } = useDashboardData();
+
   return (
-    <SafeAreaView className="flex-1 bg-base">
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-text-primary text-2xl font-bold">BrainChill</Text>
-        <Text className="text-text-secondary mt-2">
-          Dashboard placeholder — Step 2 で実装
-        </Text>
-      </View>
-    </SafeAreaView>
+    <ScreenContainer>
+      <Header />
+      <BrainFatigueScoreCard score={score} />
+      <WearableCards snapshot={snapshot} />
+      <AIRecommendationCard
+        recommendation={recommendation}
+        onComplete={completeRecommendation}
+      />
+      <TrendChartCard trend={trend} />
+    </ScreenContainer>
   );
 }
