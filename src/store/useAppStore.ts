@@ -8,7 +8,7 @@ import {
   mockSnapshot,
   mockTrend,
 } from "@/features/dashboard/data/mockData";
-import { inferFatigueFromText } from "@/services/ai/llmInferenceMock";
+import { runInference, type InferenceProvider } from "@/services/ai/inference";
 import { parseSaunaLog } from "@/services/ai/saunaLogParser";
 import type { FatigueQuickReply } from "@/services/push/notificationCategories";
 import type {
@@ -38,6 +38,10 @@ interface AppState {
   userLogs: UserLog[];
   /** typing indicator while the LLM is "thinking" */
   isAssistantTyping: boolean;
+  /** Gemini API key, BYOK — null until the user enters one */
+  geminiApiKey: string | null;
+  /** which provider produced the last inference, drives the chat badge */
+  lastInferenceProvider: InferenceProvider | null;
 
   // ---- actions ----
   completeRecommendation: (id: string) => void;
@@ -47,6 +51,8 @@ interface AppState {
   recordPushReply: (reply: FatigueQuickReply) => void;
   /** apply a fresh LLM inference: blends into the score and refreshes the recommendation */
   applyLLMInference: (result: LLMInferenceResult) => void;
+  /** persist (or clear) the user's Gemini API key */
+  setGeminiApiKey: (key: string | null) => void;
   /** test helper to clear persisted state */
   reset: () => void;
 }
@@ -65,6 +71,7 @@ const initialState = (): Omit<
   | "sendUserMessage"
   | "recordPushReply"
   | "applyLLMInference"
+  | "setGeminiApiKey"
   | "reset"
 > => ({
   score: mockScore,
@@ -74,6 +81,8 @@ const initialState = (): Omit<
   chat: [seedAssistantMessage()],
   userLogs: [],
   isAssistantTyping: false,
+  geminiApiKey: null,
+  lastInferenceProvider: null,
 });
 
 export const useAppStore = create<AppState>()(
@@ -143,10 +152,11 @@ export const useAppStore = create<AppState>()(
         }));
 
         try {
-          const result = await inferFatigueFromText({
+          const { result, provider } = await runInference({
             userMessage: trimmed,
             history: get().chat,
             wearable: get().snapshot,
+            apiKey: get().geminiApiKey,
           });
 
           // sauna report: pull the score down by the inferred recovery
@@ -169,11 +179,15 @@ export const useAppStore = create<AppState>()(
           set((state) => ({
             chat: [...state.chat, assistantMsg],
             isAssistantTyping: false,
+            lastInferenceProvider: provider,
           }));
         } catch {
           set({ isAssistantTyping: false });
         }
       },
+
+      setGeminiApiKey: (key) =>
+        set({ geminiApiKey: key && key.trim() ? key.trim() : null }),
 
       recordPushReply: (reply) => {
         const now = new Date().toISOString();
@@ -211,6 +225,7 @@ export const useAppStore = create<AppState>()(
         recommendation: state.recommendation,
         chat: state.chat,
         userLogs: state.userLogs,
+        geminiApiKey: state.geminiApiKey,
       }),
       version: 1,
     },

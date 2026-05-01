@@ -1,3 +1,5 @@
+import { useRouter, type Href } from "expo-router";
+
 import { ScreenContainer } from "@/components/layout/ScreenContainer";
 import { AIRecommendationCard } from "@/features/dashboard/components/AIRecommendationCard";
 import { BrainFatigueScoreCard } from "@/features/dashboard/components/BrainFatigueScoreCard";
@@ -7,6 +9,7 @@ import { WearableCards } from "@/features/dashboard/components/WearableCards";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const {
     score,
     snapshot,
@@ -17,7 +20,7 @@ export default function DashboardScreen() {
 
   return (
     <ScreenContainer>
-      <Header />
+      <Header onProfilePress={() => router.push("/settings" as Href)} />
       <BrainFatigueScoreCard score={score} />
       <WearableCards snapshot={snapshot} />
       <AIRecommendationCard
