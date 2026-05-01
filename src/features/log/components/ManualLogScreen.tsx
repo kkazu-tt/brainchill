@@ -49,7 +49,7 @@ export function ManualLogScreen() {
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-border web:w-full web:max-w-3xl web:self-center">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-border web:w-full web:max-w-4xl web:self-center">
           <Pressable
             onPress={close}
             accessibilityRole="button"
@@ -74,7 +74,7 @@ export function ManualLogScreen() {
         </View>
 
         <ScrollView
-          contentContainerClassName="px-5 py-6 gap-6 web:w-full web:max-w-3xl web:self-center"
+          contentContainerClassName="px-5 py-6 gap-6 web:w-full web:max-w-4xl web:self-center"
           keyboardShouldPersistTaps="handled"
         >
           <View className="gap-2">

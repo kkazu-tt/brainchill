@@ -74,7 +74,7 @@ function LogRow({ log }: { log: UserLog }) {
           </Text>
           <Text className="text-text-muted text-[10px]">{time}</Text>
         </View>
-        <Text className="text-text-primary text-sm leading-5" numberOfLines={4}>
+        <Text className="text-text-primary text-sm leading-5">
           {body}
         </Text>
         {log.parsedSaunaReport?.isSaunaReport && (

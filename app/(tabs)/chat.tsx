@@ -17,7 +17,7 @@ export default function ChatScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="flex-1 web:w-full web:max-w-3xl web:self-center">
+        <View className="flex-1 web:w-full web:max-w-4xl web:self-center">
           <ChatHeader />
           <View className="flex-1">
             <ChatList messages={messages} isAssistantTyping={isAssistantTyping} />

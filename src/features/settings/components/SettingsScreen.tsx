@@ -141,7 +141,7 @@ export function SettingsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-base" edges={["top", "left", "right"]}>
-      <View className="flex-row items-center justify-between px-5 py-4 border-b border-border web:w-full web:max-w-3xl web:self-center">
+      <View className="flex-row items-center justify-between px-5 py-4 border-b border-border web:w-full web:max-w-4xl web:self-center">
         <Pressable
           onPress={close}
           accessibilityRole="button"
@@ -165,7 +165,7 @@ export function SettingsScreen() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerClassName="px-5 py-6 gap-6 web:w-full web:max-w-3xl web:self-center">
+      <ScrollView contentContainerClassName="px-5 py-6 gap-6 web:w-full web:max-w-4xl web:self-center">
         <View className="gap-2">
           <Text className="text-text-secondary text-xs uppercase tracking-widest">
             ウェアラブル
