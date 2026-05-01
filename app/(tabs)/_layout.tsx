@@ -13,9 +13,7 @@ function TabLabel({ children, color }: { children: string; color: string }) {
         fontSize: 11,
         fontWeight: "600",
         textAlign: "center",
-        lineHeight: 22,
-        paddingTop: 2,
-        paddingBottom: 8,
+        lineHeight: 16,
       }}
     >
       {children}
