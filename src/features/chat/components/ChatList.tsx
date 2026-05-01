@@ -14,12 +14,13 @@ interface ChatListProps {
 export function ChatList({ messages, isAssistantTyping }: ChatListProps) {
   const ref = useRef<FlatList<ChatMessage>>(null);
 
+  const lastContentLength = messages[messages.length - 1]?.content.length ?? 0;
   useEffect(() => {
-    // Scroll to bottom whenever a new message arrives or the typing
-    // indicator toggles. setTimeout queues after layout settles.
+    // Scroll to bottom whenever a new message arrives, the typing
+    // indicator toggles, or the streaming message grows.
     const t = setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 50);
     return () => clearTimeout(t);
-  }, [messages.length, isAssistantTyping]);
+  }, [messages.length, isAssistantTyping, lastContentLength]);
 
   return (
     <FlatList

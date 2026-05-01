@@ -8,6 +8,7 @@ import {
   mockSnapshot,
   mockTrend,
 } from "@/features/dashboard/data/mockData";
+import { streamGeminiInference } from "@/services/ai/geminiStreamClient";
 import { runInference, type InferenceProvider } from "@/services/ai/inference";
 import { parseSaunaLog } from "@/services/ai/saunaLogParser";
 import {
@@ -216,22 +217,94 @@ export const useAppStore = create<AppState>()(
             : state.trend,
         }));
 
+        const apiKey = get().geminiApiKey;
+        const adjustFatigue = (raw: number): number =>
+          sauna.isSaunaReport
+            ? Math.max(0, raw - sauna.inferredFatigueRecovery)
+            : raw;
+
+        if (apiKey) {
+          const placeholderId = uid("msg");
+          let placeholderInserted = false;
+          const ensurePlaceholder = () => {
+            if (placeholderInserted) return;
+            placeholderInserted = true;
+            const placeholder: ChatMessage = {
+              id: placeholderId,
+              role: "assistant",
+              content: "",
+              createdAt: new Date().toISOString(),
+              isStreaming: true,
+            };
+            set((state) => ({
+              chat: [...state.chat, placeholder],
+              isAssistantTyping: false,
+            }));
+          };
+
+          try {
+            for await (const event of streamGeminiInference({
+              userMessage: trimmed,
+              history: get().chat,
+              wearable: get().snapshot,
+              apiKey,
+            })) {
+              if (event.type === "delta") {
+                ensurePlaceholder();
+                set((state) => ({
+                  chat: state.chat.map((m) =>
+                    m.id === placeholderId
+                      ? { ...m, content: event.recommendation }
+                      : m,
+                  ),
+                }));
+              } else {
+                ensurePlaceholder();
+                const adjusted: LLMInferenceResult = {
+                  ...event.result,
+                  fatigueScore: adjustFatigue(event.result.fatigueScore),
+                };
+                get().applyLLMInference(adjusted);
+                set((state) => ({
+                  chat: state.chat.map((m) =>
+                    m.id === placeholderId
+                      ? {
+                          ...m,
+                          content: adjusted.recommendation,
+                          inferenceId: adjusted.id,
+                          isStreaming: false,
+                        }
+                      : m,
+                  ),
+                  lastInferenceProvider: "gemini",
+                }));
+              }
+            }
+          } catch (err) {
+            console.warn("[chat] Gemini stream failed, falling back:", err);
+            set((state) => ({
+              chat: state.chat.filter((m) => m.id !== placeholderId),
+              isAssistantTyping: true,
+            }));
+            // fall through to mock path below
+          }
+
+          if (placeholderInserted && get().chat.some((m) => m.id === placeholderId)) {
+            return;
+          }
+        }
+
         try {
           const { result, provider } = await runInference({
             userMessage: trimmed,
             history: get().chat,
             wearable: get().snapshot,
-            apiKey: get().geminiApiKey,
+            apiKey: null,
           });
-
-          // sauna report: pull the score down by the inferred recovery
-          const adjustedFatigue = sauna.isSaunaReport
-            ? Math.max(0, result.fatigueScore - sauna.inferredFatigueRecovery)
-            : result.fatigueScore;
-          const adjusted: LLMInferenceResult = sauna.isSaunaReport
-            ? { ...result, fatigueScore: adjustedFatigue }
-            : result;
-
+          const adjusted: LLMInferenceResult = {
+            ...result,
+            fatigueScore: adjustFatigue(result.fatigueScore),
+          };
           get().applyLLMInference(adjusted);
 
           const assistantMsg: ChatMessage = {
@@ -405,7 +478,7 @@ export const useAppStore = create<AppState>()(
         snapshot: state.snapshot,
         trend: state.trend,
         recommendation: state.recommendation,
-        chat: state.chat,
+        chat: state.chat.map(({ isStreaming: _ignored, ...rest }) => rest),
         userLogs: state.userLogs,
         geminiApiKey: state.geminiApiKey,
         notifications: state.notifications,

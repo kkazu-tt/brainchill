@@ -12,6 +12,8 @@ export interface ChatMessage {
   createdAt: string;
   /** when the assistant response was derived from a fatigue inference */
   inferenceId?: string;
+  /** true while tokens are still streaming in from the LLM */
+  isStreaming?: boolean;
 }
 
 export interface LLMInferenceResult {
