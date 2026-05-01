@@ -1,11 +1,4 @@
-import { useCallback, useState } from "react";
-
-import {
-  mockRecommendation,
-  mockScore,
-  mockSnapshot,
-  mockTrend,
-} from "@/features/dashboard/data/mockData";
+import { useAppStore } from "@/store/useAppStore";
 import type {
   AIRecommendation,
   BrainFatigueScore,
@@ -23,30 +16,23 @@ export interface DashboardData {
 }
 
 /**
- * Single source for dashboard data. Backed by hard-coded mocks today;
- * in Phase 2+ this will compose:
- *   - HealthKit / Google Fit (snapshot, trend)
- *   - LLM inference service (score.llm, recommendation)
- *   - Zustand store (read-side, blended score)
- *
- * Keeping this seam in place lets the screen and feature components
- * stay agnostic of where the data actually comes from.
+ * Read-side façade for the dashboard. All state lives in the global
+ * Zustand store; this hook shapes it for the screen and keeps the
+ * components reactive to changes from the chat / push notification
+ * pipelines without them needing to know the store exists.
  */
 export function useDashboardData(): DashboardData {
-  const [recommendation, setRecommendation] =
-    useState<AIRecommendation>(mockRecommendation);
-
-  const completeRecommendation = useCallback((id: string) => {
-    setRecommendation((prev) =>
-      prev.id === id ? { ...prev, completed: true } : prev,
-    );
-  }, []);
+  const score = useAppStore((s) => s.score);
+  const snapshot = useAppStore((s) => s.snapshot);
+  const recommendation = useAppStore((s) => s.recommendation);
+  const trend = useAppStore((s) => s.trend);
+  const completeRecommendation = useAppStore((s) => s.completeRecommendation);
 
   return {
-    score: mockScore,
-    snapshot: mockSnapshot,
+    score,
+    snapshot,
     recommendation,
-    trend: mockTrend,
+    trend,
     completeRecommendation,
     isLoading: false,
   };

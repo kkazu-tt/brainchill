@@ -1,14 +1,33 @@
-import { SafeAreaView, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { ChatHeader } from "@/features/chat/components/ChatHeader";
+import { ChatInputBar } from "@/features/chat/components/ChatInputBar";
+import { ChatList } from "@/features/chat/components/ChatList";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function ChatScreen() {
+  const messages = useAppStore((s) => s.chat);
+  const isAssistantTyping = useAppStore((s) => s.isAssistantTyping);
+  const sendUserMessage = useAppStore((s) => s.sendUserMessage);
+
   return (
-    <SafeAreaView className="flex-1 bg-base">
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-text-primary text-2xl font-bold">Chat</Text>
-        <Text className="text-text-secondary mt-2">
-          AI Assistant placeholder — Step 3 で実装
-        </Text>
-      </View>
+    <SafeAreaView edges={["top"]} className="flex-1 bg-base">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ChatHeader />
+        <View className="flex-1">
+          <ChatList messages={messages} isAssistantTyping={isAssistantTyping} />
+        </View>
+        <ChatInputBar
+          onSend={(text) => {
+            void sendUserMessage(text);
+          }}
+          disabled={isAssistantTyping}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
