@@ -3,10 +3,15 @@ import "../global.css";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { colors } from "@/constants/theme";
+import {
+  initPushNotifications,
+  teardownPushNotifications,
+} from "@/services/push/notificationHandlers";
 
 const navigationTheme = {
   ...DarkTheme,
@@ -21,6 +26,11 @@ const navigationTheme = {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    void initPushNotifications();
+    return teardownPushNotifications;
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.base }}>
       <SafeAreaProvider>
