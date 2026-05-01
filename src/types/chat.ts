@@ -23,3 +23,16 @@ export interface LLMInferenceResult {
   recommendation: string;
   createdAt: string;
 }
+
+/**
+ * User-supplied label on a past inference. Powers the training-signal
+ * pipeline: paired with the originating user input + recommendation,
+ * these become supervised examples in the JSON export.
+ */
+export type InferenceFeedback = "helpful" | "off";
+
+export interface InferenceFeedbackEntry {
+  value: InferenceFeedback;
+  /** ISO timestamp of when the user tapped 👍/👎 */
+  setAt: string;
+}

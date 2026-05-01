@@ -1,7 +1,10 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
-import { Animated, Text, View } from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 
-import type { ChatMessage } from "@/types";
+import { colors } from "@/constants/theme";
+import { useAppStore } from "@/store/useAppStore";
+import type { ChatMessage, InferenceFeedback } from "@/types";
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -36,9 +39,53 @@ function StreamingCursor() {
   return <Animated.Text style={{ opacity }}>▍</Animated.Text>;
 }
 
+interface FeedbackButtonsProps {
+  inferenceId: string;
+}
+
+function FeedbackButtons({ inferenceId }: FeedbackButtonsProps) {
+  const current = useAppStore((s) => s.inferenceFeedback[inferenceId]?.value);
+  const setInferenceFeedback = useAppStore((s) => s.setInferenceFeedback);
+
+  const renderButton = (value: InferenceFeedback, icon: keyof typeof Ionicons.glyphMap, label: string) => {
+    const active = current === value;
+    return (
+      <Pressable
+        onPress={() => setInferenceFeedback(inferenceId, value)}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: active }}
+        className={`flex-row items-center gap-1 px-2.5 py-1 rounded-pill border ${
+          active ? "bg-sauna border-sauna" : "bg-surface border-border"
+        }`}
+      >
+        <Ionicons
+          name={icon}
+          size={12}
+          color={active ? colors.base : colors.textMuted}
+        />
+        <Text
+          className={`text-[11px] font-semibold ${active ? "text-base" : "text-text-muted"}`}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  return (
+    <View className="flex-row items-center gap-1.5 mt-1.5 px-1">
+      {renderButton("helpful", "thumbs-up-outline", "役立った")}
+      {renderButton("off", "thumbs-down-outline", "ズレてた")}
+    </View>
+  );
+}
+
 export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
   const showCursor = message.isStreaming;
+  const showFeedback =
+    !isUser && !message.isStreaming && Boolean(message.inferenceId);
 
   return (
     <View className={`w-full mb-3 ${isUser ? "items-end" : "items-start"}`}>
@@ -61,6 +108,9 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       <Text className="text-text-muted text-[10px] mt-1 px-1">
         {formatTime(message.createdAt)}
       </Text>
+      {showFeedback && message.inferenceId ? (
+        <FeedbackButtons inferenceId={message.inferenceId} />
+      ) : null}
     </View>
   );
 }

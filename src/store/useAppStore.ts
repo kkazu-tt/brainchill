@@ -31,6 +31,8 @@ import type {
   AIRecommendation,
   BrainFatigueScore,
   ChatMessage,
+  InferenceFeedback,
+  InferenceFeedbackEntry,
   LLMInferenceResult,
   MoodTag,
   TrendPoint,
@@ -53,6 +55,11 @@ interface AppState {
   chat: ChatMessage[];
   /** unified log of every user signal (chat + push + manual) */
   userLogs: UserLog[];
+  /**
+   * 👍/👎 labels keyed by inferenceId. Drives the training-signal
+   * export so the user can later fine-tune accuracy on their own data.
+   */
+  inferenceFeedback: Record<string, InferenceFeedbackEntry>;
   /** typing indicator while the LLM is "thinking" */
   isAssistantTyping: boolean;
   /** Gemini API key, BYOK — null until the user enters one */
@@ -86,6 +93,8 @@ interface AppState {
   addManualLog: (input: { text?: string | null; moodTag?: MoodTag | null }) => void;
   /** apply a fresh LLM inference: blends into the score and refreshes the recommendation */
   applyLLMInference: (result: LLMInferenceResult) => void;
+  /** label a past inference 👍/👎 (toggles off when the same value is tapped again) */
+  setInferenceFeedback: (inferenceId: string, value: InferenceFeedback) => void;
   /** persist (or clear) the user's Gemini API key */
   setGeminiApiKey: (key: string | null) => void;
   /** generate (or refresh) the weekly recap card on the History screen */
@@ -117,6 +126,7 @@ const initialState = (): Omit<
   | "recordPushReply"
   | "addManualLog"
   | "applyLLMInference"
+  | "setInferenceFeedback"
   | "setGeminiApiKey"
   | "refreshWeeklySummary"
   | "refreshWearableSnapshot"
@@ -131,6 +141,7 @@ const initialState = (): Omit<
   recommendation: mockRecommendation,
   chat: [seedAssistantMessage()],
   userLogs: [],
+  inferenceFeedback: {},
   isAssistantTyping: false,
   geminiApiKey: null,
   lastInferenceProvider: null,
@@ -174,6 +185,23 @@ export const useAppStore = create<AppState>()(
               ? incrementTodaySaunaVisit(s.trend)
               : s.trend,
         }));
+      },
+
+      setInferenceFeedback: (inferenceId, value) => {
+        set((state) => {
+          const existing = state.inferenceFeedback[inferenceId];
+          // Tapping the same button twice clears the label.
+          if (existing?.value === value) {
+            const { [inferenceId]: _removed, ...rest } = state.inferenceFeedback;
+            return { inferenceFeedback: rest };
+          }
+          return {
+            inferenceFeedback: {
+              ...state.inferenceFeedback,
+              [inferenceId]: { value, setAt: new Date().toISOString() },
+            },
+          };
+        });
       },
 
       applyLLMInference: (result) => {
@@ -509,6 +537,7 @@ export const useAppStore = create<AppState>()(
         recommendation: state.recommendation,
         chat: state.chat.map(({ isStreaming: _ignored, ...rest }) => rest),
         userLogs: state.userLogs,
+        inferenceFeedback: state.inferenceFeedback,
         geminiApiKey: state.geminiApiKey,
         notifications: state.notifications,
         weeklySummary: state.weeklySummary,

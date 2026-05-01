@@ -2,6 +2,7 @@ import type {
   AIRecommendation,
   BrainFatigueScore,
   ChatMessage,
+  InferenceFeedbackEntry,
   TrendPoint,
   UserLog,
   WearableSnapshot,
@@ -9,7 +10,11 @@ import type {
 import type { WeeklySummary } from "@/services/ai/weeklySummary";
 
 export interface ExportPayload {
-  schemaVersion: 1;
+  /**
+   * v2 added `inferenceFeedback`: a map of inferenceId → 👍/👎 label
+   * collected from the chat UI. Older v1 exports lack this field.
+   */
+  schemaVersion: 2;
   exportedAt: string;
   score: BrainFatigueScore;
   snapshot: WearableSnapshot;
@@ -17,6 +22,7 @@ export interface ExportPayload {
   recommendation: AIRecommendation;
   chat: ChatMessage[];
   userLogs: UserLog[];
+  inferenceFeedback: Record<string, InferenceFeedbackEntry>;
   weeklySummary: WeeklySummary | null;
 }
 
@@ -27,11 +33,12 @@ interface SourceState {
   recommendation: AIRecommendation;
   chat: ChatMessage[];
   userLogs: UserLog[];
+  inferenceFeedback: Record<string, InferenceFeedbackEntry>;
   weeklySummary: WeeklySummary | null;
 }
 
 export const buildExportPayload = (state: SourceState): ExportPayload => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   exportedAt: new Date().toISOString(),
   score: state.score,
   snapshot: state.snapshot,
@@ -39,6 +46,7 @@ export const buildExportPayload = (state: SourceState): ExportPayload => ({
   recommendation: state.recommendation,
   chat: state.chat,
   userLogs: state.userLogs,
+  inferenceFeedback: state.inferenceFeedback,
   weeklySummary: state.weeklySummary,
 });
 

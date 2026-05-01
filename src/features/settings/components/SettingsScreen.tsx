@@ -72,6 +72,7 @@ export function SettingsScreen() {
           recommendation: s.recommendation,
           chat: s.chat,
           userLogs: s.userLogs,
+          inferenceFeedback: s.inferenceFeedback,
           weeklySummary: s.weeklySummary,
         },
       });
