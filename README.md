@@ -1,50 +1,48 @@
-# Welcome to your Expo app 👋
+# BrainChill
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+サウナ × ウェアラブルで「脳疲労」を可視化・改善するクロスプラットフォームアプリ (iOS / Android / Web)。
 
-## Get started
+## Tech Stack
 
-1. Install dependencies
+- **Expo SDK 54** + Expo Router (file-based routing)
+- **TypeScript** (strict mode)
+- **NativeWind v4** (Tailwind CSS for React Native)
+- **Zustand** (lightweight state management)
+- **react-native-svg** (custom charts & circular progress)
+- **expo-notifications** (interactive push notifications)
+- **AsyncStorage** (offline-first local cache)
 
-   ```bash
-   npm install
-   ```
+## Repository Layout
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/                      Expo Router (画面遷移)
+  (tabs)/                 ボトムタブ
+    index.tsx             ダッシュボード
+    chat.tsx              AIチャット
+  _layout.tsx             ルートレイアウト + プロバイダ
+src/
+  components/             汎用UI (ui/ + layout/)
+  constants/              デザイントークン・設定
+  features/               ドメイン別 (dashboard / chat / saunaLog)
+  hooks/                  カスタムフック
+  services/               外部連携 (ai / health / push)
+  store/                  Zustand ストア
+  types/                  グローバル型
+  utils/                  ヘルパー
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+UI 層と推論／デバイス連携層を明確に分離する Feature-driven 構成です。
 
-## Learn more
+## Getting Started
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm install
+npm run ios       # or: npm run android / npm run web
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Roadmap
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Phase 1** _(現在)_ — Dashboard UI + チャットUI + Zustand + LLM/サウナログ解析モック
+- **Phase 2** — Apple HealthKit / Google Fit 連携
+- **Phase 3** — 実 LLM API 接続、LightGBM ベースの推論サービス
+- **Phase 4** — Push 通知バックエンド (FCM)、長期トレンド分析
