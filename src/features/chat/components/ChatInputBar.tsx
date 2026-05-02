@@ -16,11 +16,21 @@ interface ChatInputBarProps {
   disabled?: boolean;
 }
 
+// Temporary build marker — lets us verify which build the browser is
+// actually loading when the chat send appears unresponsive.
+const BUILD_TAG = "chat-input-2026-05-02-b";
+
 export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
   const [value, setValue] = useState("");
   const canSend = value.trim().length > 0 && !disabled;
 
+  if (typeof window !== "undefined" && !(window as { __bcLoggedTag?: boolean }).__bcLoggedTag) {
+    (window as { __bcLoggedTag?: boolean }).__bcLoggedTag = true;
+    console.log("[ChatInputBar] build", BUILD_TAG);
+  }
+
   const handleSend = () => {
+    console.log("[ChatInputBar] send tapped", { canSend, len: value.length, disabled });
     if (!canSend) return;
     onSend(value);
     setValue("");
