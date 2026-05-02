@@ -16,22 +16,11 @@ interface ChatInputBarProps {
   disabled?: boolean;
 }
 
-// Temporary build marker — lets us verify which build the browser is
-// actually loading when the chat send appears unresponsive.
-const BUILD_TAG = "chat-input-2026-05-02-c";
-
 export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
   const [value, setValue] = useState("");
   const canSend = value.trim().length > 0 && !disabled;
 
-  if (typeof window !== "undefined" && !(window as { __bcLoggedTag?: boolean }).__bcLoggedTag) {
-    (window as { __bcLoggedTag?: boolean }).__bcLoggedTag = true;
-    console.log("[ChatInputBar] build", BUILD_TAG);
-  }
-  console.log("[ChatInputBar] render", { value, len: value.length, canSend, disabled });
-
   const handleSend = () => {
-    console.log("[ChatInputBar] send tapped", { canSend, len: value.length, value });
     if (!canSend) return;
     onSend(value);
     setValue("");
@@ -81,16 +70,13 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
       </View>
 
       {Platform.OS === "web" ? (
-        // Plain <button> sidesteps react-native-web Pressable quirks
-        // (mousedown/blur ordering with the multiline textarea) that
-        // were swallowing the click in PWA + desktop Safari.
+        // Plain <button> on web — semantic HTML, no react-native-web
+        // Pressable indirection.
         <button
           type="button"
           aria-label="送信"
-          onClick={(e) => {
-            console.log("[ChatInputBar] button onClick fired", e.type);
-            handleSend();
-          }}
+          onClick={handleSend}
+          disabled={!canSend}
           style={{
             width: 44,
             height: 44,
@@ -99,7 +85,7 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            cursor: "pointer",
+            cursor: canSend ? "pointer" : "default",
             touchAction: "manipulation",
             userSelect: "none",
             backgroundColor: canSend ? colors.sauna : colors.border,
