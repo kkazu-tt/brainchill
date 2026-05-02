@@ -5,15 +5,17 @@ import { Text } from "react-native";
 import { colors } from "@/constants/theme";
 
 function TabLabel({ children, color }: { children: string; color: string }) {
+  // No `numberOfLines` / explicit `lineHeight`: those combined with
+  // `overflow: hidden` on web were clipping the descenders of "y" in
+  // History/Chat. Labels here are static one-word strings, so wrap risk
+  // is zero.
   return (
     <Text
-      numberOfLines={1}
       style={{
         color,
         fontSize: 11,
         fontWeight: "600",
         textAlign: "center",
-        lineHeight: 16,
       }}
     >
       {children}
