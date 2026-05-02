@@ -69,21 +69,54 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
         />
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="送信"
-        onPress={handleSend}
-        disabled={!canSend}
-        className={`w-11 h-11 rounded-pill items-center justify-center ${
-          canSend ? "bg-sauna active:opacity-80" : "bg-border"
-        }`}
-      >
-        <Ionicons
-          name="arrow-up"
-          size={20}
-          color={canSend ? colors.base : colors.textMuted}
-        />
-      </Pressable>
+      {Platform.OS === "web" ? (
+        // Plain <button> sidesteps react-native-web Pressable quirks
+        // (mousedown/blur ordering with the multiline textarea) that
+        // were swallowing the click in PWA + desktop Safari.
+        <button
+          type="button"
+          aria-label="送信"
+          onClick={handleSend}
+          disabled={!canSend}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 9999,
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: canSend ? "pointer" : "default",
+            touchAction: "manipulation",
+            userSelect: "none",
+            backgroundColor: canSend ? colors.sauna : colors.border,
+            padding: 0,
+          }}
+        >
+          <Ionicons
+            name="arrow-up"
+            size={20}
+            color={canSend ? colors.base : colors.textMuted}
+          />
+        </button>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="送信"
+          onPress={handleSend}
+          disabled={!canSend}
+          hitSlop={12}
+          className={`w-11 h-11 rounded-pill items-center justify-center ${
+            canSend ? "bg-sauna active:opacity-80" : "bg-border"
+          }`}
+        >
+          <Ionicons
+            name="arrow-up"
+            size={20}
+            color={canSend ? colors.base : colors.textMuted}
+          />
+        </Pressable>
+      )}
     </View>
   );
 }
