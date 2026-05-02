@@ -18,7 +18,7 @@ interface ChatInputBarProps {
 
 // Temporary build marker — lets us verify which build the browser is
 // actually loading when the chat send appears unresponsive.
-const BUILD_TAG = "chat-input-2026-05-02-b";
+const BUILD_TAG = "chat-input-2026-05-02-c";
 
 export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
   const [value, setValue] = useState("");
@@ -28,9 +28,10 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
     (window as { __bcLoggedTag?: boolean }).__bcLoggedTag = true;
     console.log("[ChatInputBar] build", BUILD_TAG);
   }
+  console.log("[ChatInputBar] render", { value, len: value.length, canSend, disabled });
 
   const handleSend = () => {
-    console.log("[ChatInputBar] send tapped", { canSend, len: value.length, disabled });
+    console.log("[ChatInputBar] send tapped", { canSend, len: value.length, value });
     if (!canSend) return;
     onSend(value);
     setValue("");
@@ -86,8 +87,10 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
         <button
           type="button"
           aria-label="送信"
-          onClick={handleSend}
-          disabled={!canSend}
+          onClick={(e) => {
+            console.log("[ChatInputBar] button onClick fired", e.type);
+            handleSend();
+          }}
           style={{
             width: 44,
             height: 44,
@@ -96,7 +99,7 @@ export function ChatInputBar({ onSend, disabled }: ChatInputBarProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            cursor: canSend ? "pointer" : "default",
+            cursor: "pointer",
             touchAction: "manipulation",
             userSelect: "none",
             backgroundColor: canSend ? colors.sauna : colors.border,
